@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  --discord-bg: #0f1117;
+  --discord-panel: #1e1f26;
+  --discord-panel-soft: #2b2d35;
+  --discord-blurple: #5865f2;
+  --discord-green: #23a559;
+  --discord-pink: #eb459e;
+  --discord-text: #f2f3f5;
+  --discord-muted: #b5bac1;
+  --discord-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--discord-bg);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--discord-text);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(88, 101, 242, 0.28), transparent 28rem),
+    radial-gradient(circle at 85% 20%, rgba(235, 69, 158, 0.16), transparent 24rem),
+    linear-gradient(135deg, #0b0d13 0%, #11131c 48%, #171923 100%);
+  font-family: var(--font-sans, ui-sans-serif), "Trebuchet MS", sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(88, 101, 242, 0.55);
+}

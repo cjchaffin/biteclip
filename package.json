@@ -1,0 +1,80 @@
+{
+    "name":  "biteclip",
+    "version":  "0.1.0",
+    "private":  true,
+    "description":  "Create Discord soundboard bites from YouTube audio.",
+    "scripts":  {
+                    "dev":  "next dev -p 3333",
+                    "build":  "next build",
+                    "start":  "next start",
+                    "lint":  "next lint",
+                    "electron:dev":  "electron .",
+                    "prepare:electron":  "node scripts/prepare-electron-dist.cjs",
+                    "dist:win":  "npm run build \u0026\u0026 npm run prepare:electron \u0026\u0026 electron-builder --win nsis zip"
+                },
+    "dependencies":  {
+                         "@types/fluent-ffmpeg":  "^2.1.27",
+                         "fluent-ffmpeg":  "^2.1.3",
+                         "next":  "^15.3.3",
+                         "react":  "^19.1.0",
+                         "react-dom":  "^19.1.0",
+                         "wavesurfer.js":  "^7.9.5"
+                     },
+    "devDependencies":  {
+                            "@tailwindcss/postcss":  "^4.1.7",
+                            "@types/node":  "^22.15.21",
+                            "@types/react":  "^19.1.6",
+                            "@types/react-dom":  "^19.1.5",
+                            "electron":  "^42.2.0",
+                            "electron-builder":  "^26.8.1",
+                            "tailwindcss":  "^4.1.7",
+                            "typescript":  "^5.8.3"
+                        },
+    "main":  "electron/main.cjs",
+    "author":  "BiteClip",
+    "license":  "MIT",
+    "build":  {
+                  "appId":  "com.biteclip.app",
+                  "productName":  "BiteClip",
+                  "directories":  {
+                                      "output":  "release"
+                                  },
+                  "files":  [
+                                "electron/**/*",
+                                "package.json"
+                            ],
+                  "extraResources":  [
+                                         {
+                                             "from":  "dist-electron/server",
+                                             "to":  "server",
+                                             "filter":  [
+                                                            "**/*"
+                                                        ]
+                                         },
+                                         {
+                                             "from":  "dist-electron/tools",
+                                             "to":  "tools",
+                                             "filter":  [
+                                                            "**/*"
+                                                        ]
+                                         }
+                                     ],
+                  "win":  {
+                              "target":  [
+                                             "nsis",
+                                             "zip"
+                                         ],
+                              "signAndEditExecutable":  false
+                          },
+                  "nsis":  {
+                               "oneClick":  false,
+                               "perMachine":  false,
+                               "allowToChangeInstallationDirectory":  true,
+                               "createDesktopShortcut":  true,
+                               "createStartMenuShortcut":  true,
+                               "shortcutName":  "BiteClip"
+                           },
+                  "forceCodeSigning":  false,
+                  "afterPack":  "scripts/electron-after-pack.cjs"
+              }
+}

@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+.env*.local
+.DS_Store
+*.log
+*.png
+.cache
+tmp
+dist-electron
+release
+packaged-server*.log
+dev-server*.log
