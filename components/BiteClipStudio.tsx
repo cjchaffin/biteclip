@@ -63,8 +63,8 @@ export default function BiteClipStudio() {
   const [downloadUrl, setDownloadUrl] = useState("");
   const [finalSize, setFinalSize] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [fadeIn, setFadeIn] = useState(true);
-  const [fadeOut, setFadeOut] = useState(true);
+  const [fadeIn, setFadeIn] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
 
   const selectionLength = useMemo(() => Math.max(0, selection.end - selection.start), [selection]);
   const estimatedBytes = useMemo(() => Math.ceil((selectionLength * 128_000) / 8), [selectionLength]);
