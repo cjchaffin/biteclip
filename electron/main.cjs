@@ -1,4 +1,5 @@
-const { app, BrowserWindow, dialog } = require("electron");
+const { app, BrowserWindow, Menu, dialog } = require("electron");
+const { autoUpdater } = require("electron-updater");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const net = require("node:net");
@@ -11,6 +12,11 @@ const isPackaged = app.isPackaged;
 const devUrl = process.env.BITECLIP_DEV_URL || "http://localhost:3333";
 const port = Number(process.env.BITECLIP_PORT || 3333);
 const logFile = path.join(app.getPath("userData"), "biteclip-electron.log");
+const updateFeed = {
+  provider: "github",
+  owner: "cjchaffin",
+  repo: "biteclip",
+};
 
 function log(message) {
   const line = `[${new Date().toISOString()}] ${message}\n`;
@@ -142,6 +148,11 @@ async function createWindow() {
     const url = await startServer();
     log(`Loading ${url}`);
     await mainWindow.loadURL(url);
+    configureAutoUpdater();
+    setAppMenu();
+    setTimeout(() => {
+      checkForUpdates(false);
+    }, 2500);
   } catch (error) {
     log(`Startup failed: ${error instanceof Error ? error.stack || error.message : String(error)}`);
     dialog.showErrorBox("BiteClip could not start", error instanceof Error ? error.message : String(error));
@@ -160,3 +171,114 @@ app.on("before-quit", () => {
     serverProcess.kill();
   }
 });
+
+function configureAutoUpdater() {
+  if (!isPackaged) {
+    log("Auto-updater skipped in development.");
+    return;
+  }
+
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.setFeedURL(updateFeed);
+
+  autoUpdater.on("checking-for-update", () => log("Checking for update."));
+  autoUpdater.on("update-not-available", () => log("No update available."));
+  autoUpdater.on("error", (error) => log(`Updater error: ${error?.stack || error?.message || String(error)}`));
+
+  autoUpdater.on("update-available", async (info) => {
+    log(`Update available: ${info.version}`);
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: "info",
+      buttons: ["Download Update", "Later"],
+      defaultId: 0,
+      cancelId: 1,
+      title: "BiteClip update available",
+      message: `BiteClip ${info.version} is available.`,
+      detail: "Download it now? BiteClip will ask before installing.",
+    });
+
+    if (result.response === 0) {
+      autoUpdater.downloadUpdate();
+    }
+  });
+
+  autoUpdater.on("update-downloaded", async (info) => {
+    log(`Update downloaded: ${info.version}`);
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: "info",
+      buttons: ["Restart and Install", "Later"],
+      defaultId: 0,
+      cancelId: 1,
+      title: "BiteClip update ready",
+      message: `BiteClip ${info.version} is ready to install.`,
+      detail: "Restart BiteClip now to finish installing the update.",
+    });
+
+    if (result.response === 0) {
+      autoUpdater.quitAndInstall();
+    }
+  });
+}
+
+function setAppMenu() {
+  const template = [
+    {
+      label: "BiteClip",
+      submenu: [
+        {
+          label: "Check for Updates",
+          click: () => checkForUpdates(true),
+        },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    },
+    {
+      label: "View",
+      submenu: [
+        { role: "reload" },
+        { role: "toggleDevTools" },
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+      ],
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+async function checkForUpdates(showNoUpdateDialog) {
+  if (!isPackaged) {
+    if (showNoUpdateDialog) {
+      dialog.showMessageBox(mainWindow, {
+        type: "info",
+        title: "Updates unavailable in development",
+        message: "Update checks only run in the packaged BiteClip app.",
+      });
+    }
+    return;
+  }
+
+  try {
+    const result = await autoUpdater.checkForUpdates();
+
+    if (showNoUpdateDialog && !result?.updateInfo?.version) {
+      dialog.showMessageBox(mainWindow, {
+        type: "info",
+        title: "No update found",
+        message: "BiteClip is up to date.",
+      });
+    }
+  } catch (error) {
+    if (showNoUpdateDialog) {
+      dialog.showMessageBox(mainWindow, {
+        type: "error",
+        title: "Update check failed",
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+}
