@@ -1,6 +1,6 @@
 {
     "name":  "biteclip",
-    "version":  "0.1.1",
+    "version":  "0.1.2",
     "private":  true,
     "description":  "Create Discord soundboard bites from YouTube audio.",
     "scripts":  {
