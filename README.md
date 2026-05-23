@@ -98,6 +98,28 @@ npm run build
 npm run start
 ```
 
+## Branch And Release Workflow
+
+- `main` is the production branch.
+- `dev` is the active development branch.
+- Do feature work on `dev` or short-lived branches based on `dev`.
+- Merge tested work into `main` before creating a public GitHub Release.
+- GitHub Releases are the production download channel for Windows users.
+
+Suggested manual release flow:
+
+```bash
+git switch dev
+npm run build
+npm run dist:win
+git switch main
+git merge dev
+git tag v0.1.2
+git push origin main --tags
+```
+
+Then upload the generated `release/` assets to a new GitHub Release.
+
 ## Docker
 
 Build:
