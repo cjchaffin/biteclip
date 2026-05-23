@@ -7,6 +7,21 @@ import RegionsPlugin, { type Region } from "wavesurfer.js/dist/plugins/regions.e
 const MAX_SECONDS = 30;
 const NUDGE_SECONDS = 0.1;
 const PRESETS = [3, 5, 10, 30];
+const SETTINGS_KEY = "biteclip-settings-v1";
+
+type BiteClipSettings = {
+  applySavedDefaults: boolean;
+  fadeIn: boolean;
+  fadeOut: boolean;
+  clipLengthSeconds: number;
+};
+
+const DEFAULT_SETTINGS: BiteClipSettings = {
+  applySavedDefaults: true,
+  fadeIn: false,
+  fadeOut: false,
+  clipLengthSeconds: 10,
+};
 
 type PrepareResponse = {
   id: string;
@@ -65,6 +80,8 @@ export default function BiteClipStudio() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [fadeIn, setFadeIn] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settings, setSettings] = useState<BiteClipSettings>(DEFAULT_SETTINGS);
 
   const selectionLength = useMemo(() => Math.max(0, selection.end - selection.start), [selection]);
   const estimatedBytes = useMemo(() => Math.ceil((selectionLength * 128_000) / 8), [selectionLength]);
@@ -76,6 +93,37 @@ export default function BiteClipStudio() {
   useEffect(() => {
     selectionRef.current = selection;
   }, [selection]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(SETTINGS_KEY);
+
+      if (!raw) {
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as Partial<BiteClipSettings>;
+      const safeSettings: BiteClipSettings = {
+        applySavedDefaults: parsed.applySavedDefaults ?? DEFAULT_SETTINGS.applySavedDefaults,
+        fadeIn: parsed.fadeIn ?? DEFAULT_SETTINGS.fadeIn,
+        fadeOut: parsed.fadeOut ?? DEFAULT_SETTINGS.fadeOut,
+        clipLengthSeconds: clamp(
+          roundTime(Number(parsed.clipLengthSeconds ?? DEFAULT_SETTINGS.clipLengthSeconds)),
+          1,
+          MAX_SECONDS,
+        ),
+      };
+
+      setSettings(safeSettings);
+
+      if (safeSettings.applySavedDefaults) {
+        setFadeIn(safeSettings.fadeIn);
+        setFadeOut(safeSettings.fadeOut);
+      }
+    } catch {
+      // Invalid local storage should not break the studio.
+    }
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -108,6 +156,12 @@ export default function BiteClipStudio() {
     setDuration(0);
     setCurrentTime(0);
     setIsPlaying(false);
+
+    if (settings.applySavedDefaults) {
+      setFadeIn(settings.fadeIn);
+      setFadeOut(settings.fadeOut);
+    }
+
     setStatus("loading");
     setMessage("Fetching the best available audio stream with yt-dlp...");
 
@@ -179,7 +233,8 @@ export default function BiteClipStudio() {
 
     wavesurfer.on("ready", (loadedDuration) => {
       setDuration(loadedDuration);
-      const end = Math.min(10, MAX_SECONDS, loadedDuration);
+      const defaultLength = settings.applySavedDefaults ? settings.clipLengthSeconds : 10;
+      const end = Math.min(defaultLength, MAX_SECONDS, loadedDuration);
       const region = regions.addRegion({
         start: 0,
         end,
@@ -270,6 +325,35 @@ export default function BiteClipStudio() {
     syncSelection({ start: adjustedStart, end });
   }
 
+  function updateSettings(partial: Partial<BiteClipSettings>) {
+    const next = {
+      ...settings,
+      ...partial,
+    };
+    setSettings(next);
+    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+  }
+
+  function saveCurrentAsDefaults() {
+    const next = {
+      ...settings,
+      fadeIn,
+      fadeOut,
+      clipLengthSeconds: clamp(roundTime(selectionLength || 10), 1, MAX_SECONDS),
+    };
+    setSettings(next);
+    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+    setMessage("Saved current editor settings as your defaults.");
+  }
+
+  function resetDefaults() {
+    setSettings(DEFAULT_SETTINGS);
+    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(DEFAULT_SETTINGS));
+    setFadeIn(DEFAULT_SETTINGS.fadeIn);
+    setFadeOut(DEFAULT_SETTINGS.fadeOut);
+    setMessage("Settings reset to default defaults.");
+  }
+
   async function createClip() {
     if (!clipId) return;
 
@@ -321,8 +405,55 @@ export default function BiteClipStudio() {
           >
             {status === "loading" ? "Loading..." : "Load Audio"}
           </button>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen((open) => !open)}
+            className="min-h-14 rounded-2xl border border-white/15 bg-white/5 px-6 font-black text-white transition hover:bg-white/10"
+          >
+            {settingsOpen ? "Hide Settings" : "Settings"}
+          </button>
         </div>
       </form>
+
+      {settingsOpen ? (
+        <Panel title="Settings">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Toggle
+              label="Apply saved defaults"
+              checked={settings.applySavedDefaults}
+              onChange={(checked) => updateSettings({ applySavedDefaults: checked })}
+            />
+            <Toggle
+              label="Default fade in"
+              checked={settings.fadeIn}
+              onChange={(checked) => updateSettings({ fadeIn: checked })}
+            />
+            <Toggle
+              label="Default fade out"
+              checked={settings.fadeOut}
+              onChange={(checked) => updateSettings({ fadeOut: checked })}
+            />
+            <label className="space-y-2 rounded-2xl border border-white/10 bg-[#0b0d13] p-3">
+              <span className="text-xs font-black uppercase tracking-[0.18em] text-[#949ba4]">Default clip length (s)</span>
+              <input
+                type="number"
+                min="1"
+                max={MAX_SECONDS}
+                step="0.1"
+                value={settings.clipLengthSeconds.toFixed(1)}
+                onChange={(event) => updateSettings({
+                  clipLengthSeconds: clamp(roundTime(Number(event.target.value)), 1, MAX_SECONDS),
+                })}
+                className="min-h-12 w-full rounded-2xl border border-white/10 bg-[#111318] px-4 font-bold text-white outline-none transition focus:border-[#5865f2]"
+              />
+            </label>
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Button onClick={saveCurrentAsDefaults}>Save current editor as defaults</Button>
+            <Button onClick={resetDefaults}>Reset defaults</Button>
+          </div>
+        </Panel>
+      ) : null}
 
       <div className="rounded-[1.5rem] border border-white/10 bg-[#111318]/80 p-4">
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
