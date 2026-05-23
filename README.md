@@ -120,6 +120,9 @@ git push origin main --tags
 
 Then upload the generated `release/` assets to a new GitHub Release.
 
+For signing options and the recommended path to reduce Windows SmartScreen
+warnings, see `docs/windows-signing.md`.
+
 ## Docker
 
 Build:
