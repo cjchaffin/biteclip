@@ -1,11 +1,5 @@
 import BiteClipStudio from "@/components/BiteClipStudio";
 
-const steps = [
-  { label: "Paste", detail: "Drop in a YouTube link" },
-  { label: "Shape", detail: "Trim, nudge, fade, preview" },
-  { label: "Ship", detail: "Export under 512KB" },
-];
-
 const specs = ["30s max", "128kbps MP3", "loudnorm", "512KB guardrail"];
 
 export default function Home() {
@@ -33,52 +27,8 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="grid gap-5 xl:grid-cols-[0.74fr_1.26fr] xl:items-start">
-          <aside className="grid gap-5 xl:sticky xl:top-5">
-            <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#1e1f26]/80 shadow-2xl shadow-black/35 backdrop-blur">
-              <div className="border-b border-white/10 bg-[linear-gradient(135deg,rgba(88,101,242,.22),rgba(235,69,158,.08))] p-6 sm:p-7">
-                <div className="mb-6 inline-flex rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm font-bold text-[#d7d9df] shadow-xl shadow-black/20">
-                  Fast cuts for loud little moments
-                </div>
-                <h2 className="text-5xl font-black leading-[0.92] tracking-[-0.06em] text-white sm:text-6xl xl:text-7xl">
-                  Clip the bite.
-                  <span className="block text-[#b8befd]">Skip the bloat.</span>
-                </h2>
-                <p className="mt-5 max-w-xl text-base leading-8 text-[#d6d9e0] sm:text-lg">
-                  Paste a YouTube URL, shape the exact soundboard moment, and export a normalized MP3 that is ready for Discord.
-                </p>
-              </div>
-
-              <div className="grid gap-3 p-5 sm:grid-cols-3 xl:grid-cols-1">
-                {steps.map((step, index) => (
-                  <div key={step.label} className="group rounded-2xl border border-white/10 bg-[#111318]/80 p-4 transition hover:border-[#5865f2]/60 hover:bg-[#171a24]">
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#5865f2] text-sm font-black text-white shadow-lg shadow-[#5865f2]/20">
-                        {index + 1}
-                      </div>
-                      <p className="text-lg font-black text-white">{step.label}</p>
-                    </div>
-                    <p className="text-sm font-semibold leading-6 text-[#b5bac1]">{step.detail}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="rounded-[1.75rem] border border-white/10 bg-[#111318]/80 p-5 shadow-xl shadow-black/20 backdrop-blur">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#949ba4]">Session</p>
-                  <h3 className="mt-1 text-2xl font-black tracking-[-0.04em] text-white">Ready to cut</h3>
-                </div>
-                <div className="h-3 w-3 rounded-full bg-[#23a559] shadow-[0_0_24px_rgba(35,165,89,.9)]" />
-              </div>
-              <p className="mt-4 text-sm leading-6 text-[#b5bac1]">
-                Start with Load Audio, then use the editor panel for playback, precision timing, presets, fades, and export.
-              </p>
-            </section>
-          </aside>
-
-          <section className="rounded-[2rem] border border-white/10 bg-[#1b1d25]/90 p-4 shadow-2xl shadow-black/40 backdrop-blur md:p-5">
+        <div className="w-full">
+          <section className="rounded-[2rem] border border-white/10 bg-[#1b1d25]/90 p-5 shadow-2xl shadow-black/40 backdrop-blur md:p-6">
             <BiteClipStudio />
           </section>
         </div>
